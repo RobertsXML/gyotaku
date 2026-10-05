@@ -14,8 +14,10 @@ use anyhow::Result;
 use futures::StreamExt as _;
 use gpui::{
     App, AppContext, Bounds, Entity, Global, KeyBinding, QuitMode, Size, TitlebarOptions,
-    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, px, size,
+    WindowBounds, WindowOptions, px, size,
 };
+#[cfg(not(target_os = "windows"))]
+use gpui::{WindowBackgroundAppearance, WindowKind};
 use gpui_platform::application;
 use gyotaku_core::Index;
 
@@ -232,6 +234,7 @@ fn root(floating: bool, window: &mut gpui::Window, cx: &mut App) -> Entity<Gyota
 /// On Wayland compositors with layer shell (niri, sway, Hyprland, KDE) the
 /// window floats above everything like a launcher, with no title bar and all
 /// keyboard input going to it.
+#[cfg(not(target_os = "windows"))]
 fn open_overlay(size: Size<gpui::Pixels>, cx: &mut App) -> Option<gpui::WindowHandle<Gyotaku>> {
     use gpui::layer_shell::*;
     std::env::var_os("WAYLAND_DISPLAY")?;
