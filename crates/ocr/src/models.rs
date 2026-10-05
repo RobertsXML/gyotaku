@@ -68,7 +68,10 @@ const RUNTIME: Option<Runtime> = Some(Runtime {
     inner: "onnxruntime-linux-aarch64-1.28.2/lib/libonnxruntime.so.1.28.2",
 });
 
-#[cfg(not(all(target_os = "linux", any(target_arch = "x86_64", target_arch = "aarch64"))))]
+#[cfg(not(all(
+    target_os = "linux",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+)))]
 const RUNTIME: Option<Runtime> = None;
 
 pub fn models_dir() -> Result<PathBuf> {
