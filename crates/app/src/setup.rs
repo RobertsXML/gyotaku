@@ -258,16 +258,24 @@ pub fn stop_service() -> bool {
 
     #[cfg(not(windows))]
     {
-        if let Some(entry) = autostart_path() {
-                let _ = std::fs::remove_file(entry);
+        #[cfg(windows)]
+            {
+                return true;
             }
-            if has_systemd() {
-                return systemctl(&["disable", "--now", SERVICE]) == Some(true);
+        
+            #[cfg(not(windows))]
+            {
+                if let Some(entry) = autostart_path() {
+                        let _ = std::fs::remove_file(entry);
+                    }
+                    if has_systemd() {
+                        return systemctl(&["disable", "--now", SERVICE]) == Some(true);
+                    }
+                    for pid in watcher_pids() {
+                        unsafe { libc::kill(pid, libc::SIGTERM) };
+                    }
+                    true
             }
-            for pid in watcher_pids() {
-                unsafe { libc::kill(pid, libc::SIGTERM) };
-            }
-            true
     }
 }
 
