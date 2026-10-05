@@ -33,6 +33,19 @@ jobs:
       - name: Build Windows executable
         run: cargo build --release --locked -p gyotaku-app
 
+      - name: Download ONNX Runtime
+        shell: pwsh
+        run: |
+          $url = 'https://github.com/microsoft/onnxruntime/releases/download/v1.28.2/onnxruntime-win-x64-1.28.2.zip'
+          $zip = Join-Path $env:RUNNER_TEMP 'onnxruntime.zip'
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne 'c4eedd29489d5feca21866d054638416f3655bf6b18851b3b6b85c8313e95c35') {
+            throw "ONNX Runtime checksum mismatch: $hash"
+          }
+          Expand-Archive -Path $zip -DestinationPath (Join-Path $env:RUNNER_TEMP 'onnxruntime') -Force
+          Copy-Item (Join-Path $env:RUNNER_TEMP 'onnxruntime\onnxruntime-win-x64-1.28.2\lib\onnxruntime.dll') 'target\release\onnxruntime.dll'
+
       - name: Verify executable
         shell: pwsh
         run: |
@@ -46,5 +59,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: gyotaku-windows-x86_64
-          path: target/release/gyotaku-app.exe
+          path: |
+            target/release/gyotaku-app.exe
+            target/release/onnxruntime.dll
           if-no-files-found: error
