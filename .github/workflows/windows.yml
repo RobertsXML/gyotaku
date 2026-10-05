@@ -1,0 +1,50 @@
+name: Windows build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Windows x86_64
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+
+      - name: Build Windows executable
+        run: cargo build --release --locked -p gyotaku-app
+
+      - name: Verify executable
+        shell: pwsh
+        run: |
+          $exe = Join-Path $env:GITHUB_WORKSPACE 'target\\release\\gyotaku-app.exe'
+          if (!(Test-Path $exe)) {
+            throw "Expected executable not found: $exe"
+          }
+          Get-Item $exe | Select-Object FullName, Length
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v7
+        with:
+          name: gyotaku-windows-x86_64
+          path: target/release/gyotaku-app.exe
+          if-no-files-found: error
