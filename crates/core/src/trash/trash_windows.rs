@@ -51,9 +51,8 @@ pub fn trash(path: &Path) -> Result<Trashed> {
         .with_context(|| format!("can't move {} to the trash", path.display()))?;
 
     if let Err(e) = fs::write(&info, format!("OriginalPath={}\n", path.display())) {
-        let _ = fs::rename(&dest, &path).or_else(|_| {
-            fs::copy(&dest, &path).and_then(|_| fs::remove_file(&dest))
-        });
+        let _ = fs::rename(&dest, &path)
+            .or_else(|_| fs::copy(&dest, &path).and_then(|_| fs::remove_file(&dest)));
         return Err(e).with_context(|| format!("can't write {}", info.display()));
     }
 
