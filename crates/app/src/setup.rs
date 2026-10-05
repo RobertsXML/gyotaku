@@ -285,7 +285,7 @@ pub fn stop_service() -> bool {
 fn cli_path() -> String {
     std::env::current_exe()
         .ok()
-        .map(|exe| exe.with_file_name("gyotaku"))
+        .map(|exe| exe.with_file_name(if cfg!(windows) { "gyotaku.exe" } else { "gyotaku" }))
         .filter(|cli| cli.exists())
         .map_or_else(|| "gyotaku".into(), |cli| cli.display().to_string())
 }
