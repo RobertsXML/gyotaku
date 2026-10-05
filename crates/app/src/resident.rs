@@ -1,3 +1,5 @@
+#[cfg(unix)]
+mod unix {
 //! Staying resident between searches.
 //!
 //! Most of a cold start is not ours. Our side is ready in about 60 ms, but
@@ -34,3 +36,36 @@ pub fn listen(socket: &PathBuf) -> Option<UnixListener> {
     let _ = std::fs::remove_file(socket);
     UnixListener::bind(socket).ok()
 }
+
+}
+
+#[cfg(unix)]
+pub use unix::*;
+
+#[cfg(windows)]
+mod windows {
+use std::path::PathBuf;
+
+pub struct Listener;
+
+impl Listener {
+    pub fn incoming(&self) -> std::iter::Empty<std::io::Result<()>> {
+        std::iter::empty()
+    }
+}
+
+pub fn socket_path() -> PathBuf {
+    std::env::temp_dir().join("gyotaku-windows-instance")
+}
+
+pub fn wake(_socket: &PathBuf) -> bool {
+    false
+}
+
+pub fn listen(_socket: &PathBuf) -> Option<Listener> {
+    None
+}
+}
+
+#[cfg(windows)]
+pub use windows::*;
