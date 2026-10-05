@@ -54,21 +54,21 @@ struct Runtime {
 
 const RUNTIME_FILE: &str = "libonnxruntime.so.1.28.2";
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 const RUNTIME: Option<Runtime> = Some(Runtime {
     url: "https://github.com/microsoft/onnxruntime/releases/download/v1.28.2/onnxruntime-linux-x64-1.28.2.tgz",
     sha256: "d7209b8751b27b862b0c76332c2e20e203396edb5dab700ecf4bb485cf147415",
     inner: "onnxruntime-linux-x64-1.28.2/lib/libonnxruntime.so.1.28.2",
 });
 
-#[cfg(target_arch = "aarch64")]
+#[cfg(all(target_os = "linux", target_arch = "aarch64"))]
 const RUNTIME: Option<Runtime> = Some(Runtime {
     url: "https://github.com/microsoft/onnxruntime/releases/download/v1.28.2/onnxruntime-linux-aarch64-1.28.2.tgz",
     sha256: "f020b3d31106cc7db03889b4a5c21e7c38ce4a09ad26119c11d1ad6d3fa0ec04",
     inner: "onnxruntime-linux-aarch64-1.28.2/lib/libonnxruntime.so.1.28.2",
 });
 
-#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+#[cfg(not(all(target_os = "linux", any(target_arch = "x86_64", target_arch = "aarch64"))))]
 const RUNTIME: Option<Runtime> = None;
 
 pub fn models_dir() -> Result<PathBuf> {
@@ -93,6 +93,14 @@ pub fn ensure(model: &Model) -> Result<PathBuf> {
 pub fn runtime() -> Result<PathBuf> {
     if let Some(path) = std::env::var_os("ORT_DYLIB_PATH") {
         return Ok(path.into());
+    }
+
+    #[cfg(windows)]
+    if let Ok(exe) = std::env::current_exe() {
+        let bundled = exe.with_file_name("onnxruntime.dll");
+        if bundled.exists() {
+            return Ok(bundled);
+        }
     }
     let path = gyotaku_core::data_dir()?.join("runtime").join(RUNTIME_FILE);
     if path.exists() {
