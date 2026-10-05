@@ -260,6 +260,11 @@ fn open_overlay(size: Size<gpui::Pixels>, cx: &mut App) -> Option<gpui::WindowHa
     .ok()
 }
 
+#[cfg(target_os = "windows")]
+fn open_overlay(_size: Size<gpui::Pixels>, _cx: &mut App) -> Option<gpui::WindowHandle<Gyotaku>> {
+    None
+}
+
 fn open_window(size: Size<gpui::Pixels>, cx: &mut App) -> gpui::WindowHandle<Gyotaku> {
     cx.open_window(
         WindowOptions {
