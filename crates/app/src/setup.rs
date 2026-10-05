@@ -258,24 +258,16 @@ pub fn stop_service() -> bool {
 
     #[cfg(not(windows))]
     {
-        #[cfg(windows)]
-            {
-                return true;
-            }
-        
-            #[cfg(not(windows))]
-            {
-                if let Some(entry) = autostart_path() {
-                        let _ = std::fs::remove_file(entry);
-                    }
-                    if has_systemd() {
-                        return systemctl(&["disable", "--now", SERVICE]) == Some(true);
-                    }
-                    for pid in watcher_pids() {
-                        unsafe { libc::kill(pid, libc::SIGTERM) };
-                    }
-                    true
-            }
+        if let Some(entry) = autostart_path() {
+            let _ = std::fs::remove_file(entry);
+        }
+        if has_systemd() {
+            return systemctl(&["disable", "--now", SERVICE]) == Some(true);
+        }
+        for pid in watcher_pids() {
+            unsafe { libc::kill(pid, libc::SIGTERM) };
+        }
+        true
     }
 }
 
@@ -285,7 +277,13 @@ pub fn stop_service() -> bool {
 fn cli_path() -> String {
     std::env::current_exe()
         .ok()
-        .map(|exe| exe.with_file_name(if cfg!(windows) { "gyotaku.exe" } else { "gyotaku" }))
+        .map(|exe| {
+            exe.with_file_name(if cfg!(windows) {
+                "gyotaku.exe"
+            } else {
+                "gyotaku"
+            })
+        })
         .filter(|cli| cli.exists())
         .map_or_else(|| "gyotaku".into(), |cli| cli.display().to_string())
 }
